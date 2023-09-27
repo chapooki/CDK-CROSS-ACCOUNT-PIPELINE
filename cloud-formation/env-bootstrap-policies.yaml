@@ -1,0 +1,236 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Creates cross account roles for Deployments
+Parameters:
+  ToolsAccountId:
+    Type: String
+  Region:
+    Type: String
+  AppName:
+    Type: String
+Resources:
+  PipelineCrossAccountRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Join 
+                  - ''
+                  - - 'arn:aws:iam::'
+                    - !Ref ToolsAccountId
+                    - ':root'
+            Action:
+              - 'sts:AssumeRole'
+      Description: Creates cross account admin role
+      RoleName: !Join 
+        - ''
+        - - !Ref AppName
+          - '-codepipeline-role'
+      Policies:
+        - PolicyName: artifact-access-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'cloudformation:*'
+                  - 'iam:PassRole'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 's3:Get*'
+                  - 's3:Put*'
+                  - 's3:ListBucket'
+                Resource:
+                  - 'arn:aws:s3:::*'
+                Effect: Allow
+              - Action:
+                  - 'kms:DescribeKey'
+                  - 'kms:GenerateDataKey*'
+                  - 'kms:Encrypt'
+                  - 'kms:ReEncrypt*'
+                  - 'kms:Decrypt'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:kms:'
+                      - !Ref Region
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':key/*'
+                Effect: Allow
+              - Action:
+                  - 'codecommit:*'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 'codebuild:*'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:codebuild:'
+                      - !Ref Region
+                      - ':'
+                      - !Ref ToolsAccountId
+                      - ':project/*'
+                Effect: Allow
+      Tags:
+        - Key: Purpose
+          Value: !Join 
+            - ''
+            - - !Ref AppName
+              - ' project'
+        - Key: Source
+          Value: !Join 
+            - ''
+            - - !Ref AppName
+              - ' tools account'
+  PipelineCrossAccountPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:*'
+            Resource: '*'
+      ManagedPolicyName: !Join 
+        - ''
+        - - !Ref AppName
+          - '-pipeline-crossaccount-policy'
+      Roles:
+        - !Ref PipelineCrossAccountRole
+  CloudFormationDeploymentRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Creates role for deployments using Cloudformation
+      RoleName: !Join 
+        - ''
+        - - !Ref AppName
+          - '-cloudformation-role'
+      Policies:
+        - PolicyName: artifact-access-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action: 'iam:PassRole'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:iam::'
+                      - !Ref 'AWS::AccountId'
+                      - ':role/*'
+                Effect: Allow
+              - Action:
+                  - 'iam:GetRole'
+                  - 'iam:CreateRole'
+                  - 'iam:AttachRolePolicy'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:iam::'
+                      - !Ref 'AWS::AccountId'
+                      - ':role/*'
+                Effect: Allow
+              - Action:
+                  - 's3:GetObject*'
+                  - 's3:GetBucket*'
+                  - 's3:List*'
+                Resource:
+                  - 'arn:aws:s3:::*'
+                Effect: Allow
+              - Action:
+                  - 'kms:DescribeKey'
+                  - 'kms:Decrypt'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:kms:'
+                      - !Ref Region
+                      - ':'
+                      - !Ref ToolsAccountId
+                      - ':key/*'
+                Effect: Allow
+              - Action:
+                  - 'cloudformation:CreateStack'
+                  - 'cloudformation:DescribeStack*'
+                  - 'cloudformation:GetStackPolicy'
+                  - 'cloudformation:GetTemplate*'
+                  - 'cloudformation:SetStackPolicy'
+                  - 'cloudformation:UpdateStack'
+                  - 'cloudformation:ValidateTemplate'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:cloudformation:'
+                      - !Ref Region
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':'
+                      - stack/*/*
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:cloudformation:'
+                      - !Ref Region
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':'
+                      - stackset/*/*
+                Effect: Allow
+      Tags:
+        - Key: Purpose
+          Value: !Join 
+            - ''
+            - - !Ref AppName
+              - ' project'
+        - Key: Source
+          Value: !Join 
+            - ''
+            - - !Ref AppName
+              - ' tools account'
+  CloudFormationDeploymentPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'codecommit:*'
+              - 'codedeploy:*'
+              - 'codebuild:*'
+              - 'ec2:*'
+              - 'lambda:*'
+              - 'amplify:*'
+              - 'appsync:*'
+              - 's3:*'
+              - 'apigateway:*'
+              - 'dynamodb:*'
+              - 'rds:*'
+              - 'sns:*'
+              - 'sqs:*'
+              - 'iam:*'
+              - 'cloudtrail:*'
+              - 'events:*'
+              - 'schemas:*'
+              - 'ssm:*'
+              - 'cloudfront:*'
+            Resource: '*'
+      ManagedPolicyName: !Join 
+        - ''
+        - - !Ref AppName
+          - '-cloudformation-policy'
+      Roles:
+        - !Ref CloudFormationDeploymentRole

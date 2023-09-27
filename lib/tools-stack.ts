@@ -1,16 +1,21 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { CfnOutput } from '@aws-cdk/core';
+import { EncryptionConstruct } from './encryption';
+import {
+  ToolsPipelineConstruct,
+} from './pipelines';
+import { Constants } from "../config/AppConstants";
+
+export interface ToolsStackProps extends StackProps {
+  environment: string
+}
 
 export class ToolsStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: ToolsStackProps) {
     super(scope, id, props);
-
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'ToolsQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    
+    new EncryptionConstruct(this, `${Constants.appName}EncryptionKey`);
+    new ToolsPipelineConstruct(this, `${Constants.appName}ToolsPipeline`);
   }
 }
