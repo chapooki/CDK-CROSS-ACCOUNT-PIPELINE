@@ -1,17 +1,21 @@
 
 import { Construct } from "constructs";
-import kms = require("@aws-cdk/aws-kms");
+import { aws_kms, aws_iam } from 'aws-cdk-lib';
 import { PipelineConstants } from "../values";
-import * as iam from "@aws-cdk/aws-iam";
 import { Constants } from "../../config/AppConstants";
+import { environmentProps } from '../values';
+
+export interface Props {
+  environment: environmentProps
+}
 
 export class EncryptionConstruct extends Construct {
   public readonly encryptionKeyArn: string;
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
-    const artifactsKey = new kms.Key(this, "ArtifactsKey", {
+    const artifactsKey = new aws_kms.Key(this, "ArtifactsKey", {
       alias: `${Constants.appName}-artifacts-key`,
     });
 
@@ -19,13 +23,11 @@ export class EncryptionConstruct extends Construct {
 
     const environmentValues = new PipelineConstants();
 
-    // Dev account wireup
-    if (environmentValues.devProps.active) {
-      const devDeploymentRole = iam.Role.fromRoleArn(
+      const deploymentRole = aws_iam.Role.fromRoleArn(
         this,
-        "devDeploymentRole",
+        "deploymentRole",
         environmentValues.getRoleArn(
-          environmentValues.devProps.accountId,
+          props.environment.accountId,
           Constants.cloudFormationRoleName
         ),
         {
@@ -33,11 +35,11 @@ export class EncryptionConstruct extends Construct {
         }
       );
 
-      const devCrossAccountRole = iam.Role.fromRoleArn(
+      const crossAccountRole = aws_iam.Role.fromRoleArn(
         this,
-        "devCrossAccountRole",
+        "crossAccountRole",
         environmentValues.getRoleArn(
-          environmentValues.devProps.accountId,
+          props.environment.accountId,
           Constants.codePipelineRoleName
         ),
         {
@@ -45,87 +47,16 @@ export class EncryptionConstruct extends Construct {
         }
       );
 
-      const devAccountRootPrincipal = new iam.AccountPrincipal(
-        environmentValues.devProps.accountId
+      const accountRootPrincipal = new aws_iam.AccountPrincipal(
+        props.environment.accountId
       );
 
-      artifactsKey.grantAdmin(devAccountRootPrincipal);
-      artifactsKey.grantAdmin(devDeploymentRole);
-      artifactsKey.grantAdmin(devCrossAccountRole);
+      artifactsKey.grantAdmin(accountRootPrincipal);
+      artifactsKey.grantAdmin(deploymentRole);
+      artifactsKey.grantAdmin(crossAccountRole);
 
-      artifactsKey.grantEncryptDecrypt(devAccountRootPrincipal);
-      artifactsKey.grantEncryptDecrypt(devDeploymentRole);
-      artifactsKey.grantEncryptDecrypt(devCrossAccountRole);
-    }
-
-    //Test account wireup
-    if (environmentValues.testProps.active) {
-      const testDeploymentRole = iam.Role.fromRoleArn(
-        this,
-        "testDeploymentRole",
-        environmentValues.getRoleArn(
-          environmentValues.testProps.accountId,
-          Constants.cloudFormationRoleName
-        ),
-        {
-          mutable: false,
-        }
-      );
-
-      const testCrossAccountRole = iam.Role.fromRoleArn(
-        this,
-        "testCrossAccountRole",
-        environmentValues.getRoleArn(
-          environmentValues.testProps.accountId,
-          Constants.codePipelineRoleName
-        ),
-        {
-          mutable: false,
-        }
-      );
-
-      const testAccountRootPrincipal = new iam.AccountPrincipal(
-        environmentValues.testProps.accountId
-      );
-
-      artifactsKey.grantDecrypt(testAccountRootPrincipal);
-      artifactsKey.grantDecrypt(testCrossAccountRole);
-      artifactsKey.grantDecrypt(testDeploymentRole);
-    }
-
-    //Production Account wireup
-    if (environmentValues.prodProps.active) {
-      const prodDeploymentRole = iam.Role.fromRoleArn(
-        this,
-        "prodDeploymentRole",
-        environmentValues.getRoleArn(
-          environmentValues.prodProps.accountId,
-          Constants.cloudFormationRoleName
-        ),
-        {
-          mutable: false,
-        }
-      );
-
-      const prodCrossAccountRole = iam.Role.fromRoleArn(
-        this,
-        "prodCrossAccountRole",
-        environmentValues.getRoleArn(
-          environmentValues.prodProps.accountId,
-          Constants.codePipelineRoleName
-        ),
-        {
-          mutable: false,
-        }
-      );
-
-      const prodAccountRootPrincipal = new iam.AccountPrincipal(
-        environmentValues.prodProps.accountId
-      );
-
-      artifactsKey.grantDecrypt(prodAccountRootPrincipal);
-      artifactsKey.grantDecrypt(prodCrossAccountRole);
-      artifactsKey.grantDecrypt(prodDeploymentRole);
-    }
+      artifactsKey.grantEncryptDecrypt(accountRootPrincipal);
+      artifactsKey.grantEncryptDecrypt(deploymentRole);
+      artifactsKey.grantEncryptDecrypt(crossAccountRole);
   }
 }

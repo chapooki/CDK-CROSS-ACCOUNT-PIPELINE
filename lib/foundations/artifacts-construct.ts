@@ -1,35 +1,34 @@
-import * as cdk from '@aws-cdk/core';
-import * as kms from '@aws-cdk/aws-kms';
-import * as s3 from '@aws-cdk/aws-s3'
+import { aws_kms, aws_s3, aws_iam} from 'aws-cdk-lib';
 import { environmentProps } from '../values';
-import * as iam from '@aws-cdk/aws-iam';
+import { Constants } from "../../config/AppConstants";
+import { Construct } from 'constructs';
 
 export interface Props {
     environment: environmentProps,
     getRoleArn: (account: string, roleName: string) => string,
-    artifactsKeys: kms.Key[],
-    artifactBucket: s3.Bucket
+    artifactsKeys: aws_kms.Key[],
+    artifactBucket: aws_s3.Bucket
 }
 
-export class CrossAccountConstruct extends cdk.Construct {
+export class ArtifactsConstruct extends Construct {
 
-    public deploymentRole: iam.IRole;
-    public crossAccountRole: iam.IRole;
+    public deploymentRole: aws_iam.IRole;
+    public crossAccountRole: aws_iam.IRole;
 
-    constructor(scope: cdk.Construct, id: string, props: Props) {
+    constructor(scope: Construct, id: string, props: Props) {
         super(scope, id);
 
-        this.deploymentRole = iam.Role.fromRoleArn(this, `${props.environment.envType}DeploymentRole`,
-            props.getRoleArn(props.environment.accountId, props.environment.cloudFormationRoleName), {
+        this.deploymentRole = aws_iam.Role.fromRoleArn(this, `${props.environment.envType}DeploymentRole`,
+            props.getRoleArn(props.environment.accountId, Constants.cloudFormationRoleName), {
             mutable: false
         });
 
-        this.crossAccountRole = iam.Role.fromRoleArn(this, `${props.environment.envType}CrossAccountRole`,
-            props.getRoleArn(props.environment.accountId, props.environment.codePipelineRoleName), {
+        this.crossAccountRole = aws_iam.Role.fromRoleArn(this, `${props.environment.envType}CrossAccountRole`,
+            props.getRoleArn(props.environment.accountId, Constants.codePipelineRoleName), {
             mutable: false
         });
 
-        const accountRootPrincipal = new iam.AccountPrincipal(props.environment.accountId);
+        const accountRootPrincipal = new aws_iam.AccountPrincipal(props.environment.accountId);
 
         if (props.artifactsKeys && props.artifactsKeys.length > 0)
             props.artifactsKeys.forEach((key) => {

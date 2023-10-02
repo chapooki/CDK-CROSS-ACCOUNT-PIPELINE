@@ -1,3 +1,5 @@
+#TODO: move Env accounts to a seperate script and reuse it for each environment with using the values.ts 
+
 # Define environment variables
 $appName = "naz-devenv"
 $region = "ap-southeast-2"
@@ -46,3 +48,6 @@ cdk bootstrap $devAccountId/$region `
 --trust $toolAccountId `
 --trust-for-lookup $toolAccountId `
 --profile $devAccountProfile
+
+# Deploy Tools Pipeline
+cdk deploy --stack toolsStack --profile $toolAccountProfile

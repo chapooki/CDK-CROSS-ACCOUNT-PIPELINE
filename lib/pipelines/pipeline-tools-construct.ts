@@ -1,37 +1,24 @@
-import * as cdk from '@aws-cdk/core';
-import codecommit = require('@aws-cdk/aws-codecommit');
-import * as codepipeline from '@aws-cdk/aws-codepipeline';
-import * as codepipeline_actions from '@aws-cdk/aws-codepipeline-actions';
-import { SimpleSynthAction, CdkPipeline } from "@aws-cdk/pipelines";
+import { pipelines, SecretValue } from 'aws-cdk-lib';
 import { Constants } from "../../config/AppConstants";
-// import * as ssm from '@aws-cdk/aws-ssm';
+import { Construct } from 'constructs';
 
-export class ToolsPipelineConstruct extends cdk.Construct {
-  constructor(scope: cdk.Construct, id: string) {
-    super(scope, id);
+export class ToolsPipelineConstruct extends Construct {
+  constructor(scope: Construct, id: string) {
+    super(scope, id);  
 
-    const toolsRepo = new codecommit.Repository(this, 'CodeCommitRepo', {
-      repositoryName: `${Constants.appName}-tools-repo`
-    });
+    const gitHubPAT = SecretValue.secretsManager(`${Constants.appName}-github-pat`)
 
-    const sourceArtifact = new codepipeline.Artifact();     
-    const cloudAssemblyArtifact = new codepipeline.Artifact();    
+    console.log(`gitHubPAT=${gitHubPAT}`) 
 
-    new CdkPipeline(this, "Pipeline", {
+    new pipelines.CodePipeline(this, "Pipeline", {
       pipelineName: `${Constants.appName}-ToolsPipeline`,
-      crossAccountKeys: false,      
-      cloudAssemblyArtifact,     
-
-      sourceAction: new codepipeline_actions.CodeCommitSourceAction({
-        actionName: 'CodeCommit',
-        output: sourceArtifact,
-        repository: toolsRepo
-      }),
-
-      synthAction: SimpleSynthAction.standardNpmSynth({
-        sourceArtifact,        
-        cloudAssemblyArtifact,
-        buildCommand: 'npm run build',        
+      crossAccountKeys: false,     
+      synth: new pipelines.ShellStep('Synth', {
+        input: pipelines.CodePipelineSource.gitHub('chapooki/CDK-CROSS-ACCOUNT-PIPELINE', 'master', {
+          // This is optional
+          authentication: gitHubPAT,
+        }),
+        commands: ['npm ci', 'npm run build', 'npx cdk synth']
       })
     });
   }

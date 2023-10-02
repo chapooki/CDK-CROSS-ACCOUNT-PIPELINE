@@ -1,6 +1,5 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnOutput } from '@aws-cdk/core';
 import { EncryptionConstruct } from './encryption';
 import {
   ToolsPipelineConstruct,
@@ -14,8 +13,8 @@ export interface ToolsStackProps extends StackProps {
 export class ToolsStack extends Stack {
   constructor(scope: Construct, id: string, props: ToolsStackProps) {
     super(scope, id, props);
-    
-    new EncryptionConstruct(this, `${Constants.appName}EncryptionKey`);
+    // NOT sure if it's used in the new cdk version
+    // new EncryptionConstruct(this, `${Constants.appName}EncryptionKey`);
     new ToolsPipelineConstruct(this, `${Constants.appName}ToolsPipeline`);
   }
 }
