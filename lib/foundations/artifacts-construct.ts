@@ -1,6 +1,5 @@
 import { aws_kms, aws_s3, aws_iam} from 'aws-cdk-lib';
-import { environmentProps } from '../values';
-import { Constants } from "../../config/AppConstants";
+import { Constants, environmentProps } from "../../config/AppConstants";
 import { Construct } from 'constructs';
 
 export interface Props {
@@ -18,12 +17,12 @@ export class ArtifactsConstruct extends Construct {
     constructor(scope: Construct, id: string, props: Props) {
         super(scope, id);
 
-        this.deploymentRole = aws_iam.Role.fromRoleArn(this, `${props.environment.envType}DeploymentRole`,
+        this.deploymentRole = aws_iam.Role.fromRoleArn(this, `DeploymentRole`,
             props.getRoleArn(props.environment.accountId, Constants.cloudFormationRoleName), {
             mutable: false
         });
 
-        this.crossAccountRole = aws_iam.Role.fromRoleArn(this, `${props.environment.envType}CrossAccountRole`,
+        this.crossAccountRole = aws_iam.Role.fromRoleArn(this, `CrossAccountRole`,
             props.getRoleArn(props.environment.accountId, Constants.codePipelineRoleName), {
             mutable: false
         });

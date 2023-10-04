@@ -1,53 +1,34 @@
-#TODO: move Env accounts to a seperate script and reuse it for each environment with using the values.ts 
-
 # Define environment variables
+# TODO: read from AppConstants
 $appName = "naz-devenv"
 $region = "ap-southeast-2"
-$toolAccountId = "937239801448"
+$toolsAccountId = "937239801448"
 $devAccountId = "285798802528"
-$toolAccountProfile = "default"
+$toolsAccountProfile = "default"
 $devAccountProfile = "naz.aws.05092023.dev"
+$bootstrapAccountScriptPath = ".\tools\scripts\bootstrapAccount.ps1"
 
-# Deploy the policies required to be used by CDK bootstrap
-$JsonParameter = @(
-  @{
-    ParameterKey   = 'ToolsAccountId'
-    ParameterValue = $toolAccountId
-  },
-  @{
-    ParameterKey   = 'Region'
-    ParameterValue = $region
-  },
-  @{
-    ParameterKey   = 'AppName'
-    ParameterValue = $appName
-  }
-) 
-$JsonParameterString = $JsonParameter | Convertto-json -Compress
-Write-Host "Creating the bootstrapPolicies stack..."
-$bootstrapPoliciesStackId = 
-  aws cloudformation create-stack `
-    --stack-name "bootstrap-policies" `
-    --template-body "file://tools/cloud-formation/env-bootstrap-policies.yaml" `
-    --parameters $JsonParameterString `
-    --capabilities CAPABILITY_NAMED_IAM `
-    --profile $devAccountProfile `
-    --output text
+# Bootstrap Tools Account
+$bootstrapArgumentList = @()
+$bootstrapArgumentList += ("-appName", "`"$appName`"")
+$bootstrapArgumentList += ("-region", "`"$region`"")
+$bootstrapArgumentList += ("-env", "`"Tools`"")
+$bootstrapArgumentList += ("-toolsAccountId", "`"$toolsAccountId`"")
+$bootstrapArgumentList += ("-targetAccountId", "`"$toolsAccountId`"")
+$bootstrapArgumentList += ("-targetAccountProfile", "`"$toolsAccountProfile`"")
 
-# Wait for the stack to exist
-aws cloudformation wait stack-create-complete --profile $devAccountProfile --stack-name $bootstrapPoliciesStackId
+Write-Host "calling boostrap for Tools account with arguments list = $($bootstrapArgumentList)"
+Invoke-Expression "& `"$bootstrapAccountScriptPath`" $bootstrapArgumentList"
 
-# Output the result of the create-stack command
-Write-Host "The bootstrapPolicies stack was created. StackId = $bootstrapPoliciesStackId"
+# TODO: loop thru env in AppConstants
+# Bootstrap Dev Account
+$bootstrapArgumentList = @()
+$bootstrapArgumentList += ("-appName", "`"$appName`"")
+$bootstrapArgumentList += ("-region", "`"$region`"")
+$bootstrapArgumentList += ("-env", "`"Dev`"")
+$bootstrapArgumentList += ("-toolsAccountId", "`"$toolsAccountId`"")
+$bootstrapArgumentList += ("-targetAccountId", "`"$devAccountId`"")
+$bootstrapArgumentList += ("-targetAccountProfile", "`"$devAccountProfile`"")
 
-# Bootstrap
-Write-Host "CDK bootstraping"
-cdk bootstrap $devAccountId/$region `
---no-bootstrap-customer-key `
---cloudformation-execution-policies "arn:aws:iam::$($devAccountId):policy/$($appName)-cloudformation-policy" `
---trust $toolAccountId `
---trust-for-lookup $toolAccountId `
---profile $devAccountProfile
-
-# Deploy Tools Pipeline
-cdk deploy --stack toolsStack --profile $toolAccountProfile
+Write-Host "calling boostrap for Dev account with arguments list = $($bootstrapArgumentList)"
+Invoke-Expression "& `"$bootstrapAccountScriptPath`" $bootstrapArgumentList"

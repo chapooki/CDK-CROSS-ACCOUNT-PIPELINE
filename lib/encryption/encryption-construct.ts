@@ -2,8 +2,7 @@
 import { Construct } from "constructs";
 import { aws_kms, aws_iam } from 'aws-cdk-lib';
 import { PipelineConstants } from "../values";
-import { Constants } from "../../config/AppConstants";
-import { environmentProps } from '../values';
+import { Constants, environmentProps } from "../../config/AppConstants";
 
 export interface Props {
   environment: environmentProps
@@ -26,7 +25,7 @@ export class EncryptionConstruct extends Construct {
       const deploymentRole = aws_iam.Role.fromRoleArn(
         this,
         "deploymentRole",
-        environmentValues.getRoleArn(
+        Constants.getRoleArn(
           props.environment.accountId,
           Constants.cloudFormationRoleName
         ),
@@ -38,7 +37,7 @@ export class EncryptionConstruct extends Construct {
       const crossAccountRole = aws_iam.Role.fromRoleArn(
         this,
         "crossAccountRole",
-        environmentValues.getRoleArn(
+        Constants.getRoleArn(
           props.environment.accountId,
           Constants.codePipelineRoleName
         ),

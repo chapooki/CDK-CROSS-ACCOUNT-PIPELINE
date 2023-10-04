@@ -8,7 +8,7 @@ export interface Props extends StackProps {
 
 /// to create the resources like roles required to run pipelines cross-account
 export class FoundationsStack extends Stack {
-  constructor(scope: Construct, id: string, props: Props) {
+  constructor(scope: Construct, id: string, props?: Props) {
     super(scope, id, props);
       new TeamPermissionsConstruct(this, `TeamPermissions`);    
   }
