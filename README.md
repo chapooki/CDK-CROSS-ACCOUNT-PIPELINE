@@ -17,6 +17,7 @@ Then navigate to Secrets Manager in the Tools account AWS console and select Sto
 - Assign PermissionSets to user groups:
    - Admin: {appName}-admin-access-policy
    - Developer: {appName}-developer-access-policy
+- Give user groups access to the environment accounts using the defined permission sets. 
 
 
 

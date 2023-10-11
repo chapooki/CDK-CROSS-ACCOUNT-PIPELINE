@@ -53,6 +53,10 @@ export class ToolsPipelineConstruct extends Construct {
     //   actions: ['sts:AssumeRole'],
     //   resources: [rolesInAllAccounts]
     // }));
+    
+    pipeline.addStage(new ToolsPipelineFoundationsStage(this, `ToolsFoundationsStage`, {
+      env: { account: Constants.toolsProps.accountId, region: Constants.region }
+    }));
 
     const activeEnv = Constants.getActivePropsList();
     activeEnv.forEach(env => {
@@ -64,7 +68,7 @@ export class ToolsPipelineConstruct extends Construct {
       //   artifactBucket: artifactBucket
       // });
       
-      pipeline.addStage(new ToolsPipelineFoundationsStage(this, "FoundationsStage", {
+      pipeline.addStage(new ToolsPipelineFoundationsStage(this, `${env.env}FoundationsStage`, {
         env: { account: env.accountId, region: Constants.region }
       }));
     });
