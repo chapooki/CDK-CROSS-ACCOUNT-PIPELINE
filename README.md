@@ -17,16 +17,13 @@ Then navigate to Secrets Manager in the Tools account AWS console and select Sto
 - Assign PermissionSets to user groups:
    - Admin: {appName}-admin-access-policy
    - Developer: {appName}-developer-access-policy
-- Give user groups access to the environment accounts using the defined permission sets. 
+- Give user groups access to the environment and tools accounts using the defined permission sets. 
 
 
 
 ## TODO:
-- Limit access by setting --cloudformation-execution-policiesin cdk bootstrap
-- ConfigConstruct => not used yet
-- EncryptionConstruct => merge with artifact construct
+- Limit access by setting --cloudformation-execution-policies in cdk bootstrap
 - Team permission: developers need a different level of access in each account. But currently, we have the same level of access everywhere
 
 ## NOTE
 - We use CDK Pipelines from aws-cdk-lib.pipelines instead of aws-cdk-lib.aws_codepipeline as it has simplified the definition of cross account deployment, and although it has limitations, we do not need those features. Read more here: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html
-- Create ArtifactsConstruct in every pipeline construct. QUESTION? why do we need artifact buckets in every account?
