@@ -1,8 +1,8 @@
 
 import { Construct } from "constructs";
 import { aws_kms, aws_iam } from 'aws-cdk-lib';
-import { PipelineConstants } from "../values";
 import { Constants, environmentProps } from "../../config/AppConstants";
+import { constants } from "buffer";
 
 export interface Props {
   environment: environmentProps
@@ -19,8 +19,6 @@ export class EncryptionConstruct extends Construct {
     });
 
     this.encryptionKeyArn = artifactsKey.keyArn;
-
-    const environmentValues = new PipelineConstants();
 
       const deploymentRole = aws_iam.Role.fromRoleArn(
         this,

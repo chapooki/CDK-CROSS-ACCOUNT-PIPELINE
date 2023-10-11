@@ -16,8 +16,12 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - codepipeline.amazonaws.com
+              AWS:
+                - !Join                    
+                    - ''
+                    - - "arn:aws:iam::"
+                      - !Ref ToolsAccountId
+                      - ":root"
             Action:
               - 'sts:AssumeRole'
       Description: Creates cross account admin role

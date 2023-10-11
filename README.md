@@ -8,6 +8,8 @@ Then navigate to Secrets Manager in the Tools account AWS console and select Sto
 - In each environment account (Dev/UAT/Prod), create a local admin user with cli access keys to deploy the foundations stack.
 - Run the boostrap.ps1 script from the root folder to bootstrap the accounts
 - Deploy the pipelines using deployPipelines.ps1 script from tools folder
+- [TO BE CONFIRMED] Administrative permissions to the account are only necessary up until this point. We recommend you remove access to these credentials after doing this.
+
 
 
 - Create Admin and Developer Groups 
@@ -19,9 +21,11 @@ Then navigate to Secrets Manager in the Tools account AWS console and select Sto
 
 
 ## TODO:
- - ConfigConstruct => not used yet
- - EncryptionConstruct => merge with artifact construct
- - Team permission: developers need a different level of access in each account. But currently, we have the same level of access everywhere
+- Limit access by setting --cloudformation-execution-policiesin cdk bootstrap
+- ConfigConstruct => not used yet
+- EncryptionConstruct => merge with artifact construct
+- Team permission: developers need a different level of access in each account. But currently, we have the same level of access everywhere
 
 ## NOTE
- - create ArtifactsConstruct in every pipeline construct. QUESTION? why do we need artifact buckets in every account?
+- We use CDK Pipelines from aws-cdk-lib.pipelines instead of aws-cdk-lib.aws_codepipeline as it has simplified the definition of cross account deployment, and although it has limitations, we do not need those features. Read more here: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.pipelines-readme.html
+- Create ArtifactsConstruct in every pipeline construct. QUESTION? why do we need artifact buckets in every account?
